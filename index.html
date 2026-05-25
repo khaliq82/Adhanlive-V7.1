@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>AdhanLive: Watch the Adhan Sweep the Earth in Real Time</title>
 
 <!-- SEO -->
@@ -593,21 +593,25 @@ body.map-active #map-footer{display:flex;}
 
   /* Hide desktop globe canvas on mobile completely */
   #globe-canvas{display:none !important;}
-  /* Nav fully opaque on mobile - increased height to close gap */
+  /* Nav fully opaque on mobile - covers iOS safe area */
   nav{
     background:#000 !important;
     backdrop-filter:none;
-    height:64px !important;
+    height:calc(64px + env(safe-area-inset-top, 20px)) !important;
+    padding-top:env(safe-area-inset-top, 20px);
   }
-  /* Fade gradient below nav - content dissolves into nav */
+  /* Top mask covers full nav including safe area */
   body.map-active #mobile-top-mask{
-    height:64px;
+    top:0;
+    height:calc(64px + env(safe-area-inset-top, 20px));
   }
+  /* Fade gradient starts below full nav height */
   #mobile-fade-top{display:none;}
   body.map-active #mobile-fade-top{
     display:block;
     position:fixed;
-    top:64px;left:0;right:0;
+    top:calc(64px + env(safe-area-inset-top, 20px));
+    left:0;right:0;
     height:48px;
     background:linear-gradient(to bottom, #000 0%, transparent 100%);
     z-index:499;
