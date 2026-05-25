@@ -594,25 +594,25 @@ body.map-active #map-footer{display:flex;}
 
   /* Mobile feature pills */
   .mobile-feature-pills{
-    display:flex;gap:8px;padding:12px 16px;
-    flex-wrap:wrap;
+    display:flex;gap:8px;padding:8px 16px 12px;
+    flex-wrap:nowrap;
   }
   .mfp-pill{
     display:flex;align-items:center;gap:5px;
-    padding:8px 14px;border-radius:20px;
+    padding:8px 10px;border-radius:20px;
     background:rgba(255,255,255,0.06);
     border:1px solid rgba(255,255,255,0.12);
     text-decoration:none;
-    font-size:11px;font-weight:600;letter-spacing:0.05em;
+    font-size:10px;font-weight:600;letter-spacing:0.04em;
     color:rgba(255,255,255,0.8);text-transform:uppercase;
-    flex:1;justify-content:center;
+    flex:1;justify-content:center;white-space:nowrap;
   }
 
   /* Mobile copyright */
   .mobile-copyright{
     font-size:9px;color:rgba(255,255,255,0.2);
     letter-spacing:0.05em;text-align:center;
-    padding:8px 16px 100px;
+    padding:6px 16px 56px;
   }
 
   /* Ensure scroll content has enough bottom padding for footer */
@@ -1352,13 +1352,13 @@ footer{
   #mobile-globe-card{
     display:none; /* shown via map-active */
     position:relative;
-    width:calc(100% - 32px);
-    margin:76px auto 0;
-    border-radius:20px;
+    width:100%;
+    margin:56px 0 0;
+    border-radius:0;
     overflow:hidden;
-    border:1px solid rgba(0,212,255,0.25);
-    box-shadow:0 0 24px rgba(0,212,255,0.12), 0 0 60px rgba(0,212,255,0.06), inset 0 0 20px rgba(0,0,0,0.4);
-    background:radial-gradient(ellipse at center, #0a1628 0%, #000 70%);
+    border:none;
+    box-shadow:none;
+    background:#000;
     aspect-ratio:1/1;
     touch-action:none;
     z-index:50;
@@ -2891,6 +2891,11 @@ const COUNTRY_NAMES={
   'LS':'Lesotho','NA':'Namibia','BW':'Botswana','GA':'Gabon','CG':'Congo',
   'CD':'DR Congo','CF':'Central African Republic','SS':'South Sudan',
   'RW':'Rwanda','BI':'Burundi','MW':'Malawi',
+  'JP':'Japan','KR':'South Korea','MD':'Moldova','HR':'Croatia',
+  'SK':'Slovakia','CZ':'Czechia','HU':'Hungary','PL':'Poland',
+  'LT':'Lithuania','LV':'Latvia','EE':'Estonia','FI':'Finland',
+  'DK':'Denmark','IE':'Ireland','PT':'Portugal','LU':'Luxembourg',
+  'SG':'Singapore','TW':'Taiwan','MO':'Macao',
 };
 
 function updateMobileStats(calling,pC,activeMosques){
@@ -2927,10 +2932,13 @@ function updateMobileStats(calling,pC,activeMosques){
   const sorted=Object.entries(countryMap).sort((a,b)=>b[1]-a[1]).slice(0,15);
   const track=document.getElementById('m-country-track');
   if(track)track.innerHTML=sorted.map(([country,count],i)=>{
-    const flag=FLAGS[country]||'';
+    const NAME_TO_CODE2={};
+    Object.entries(COUNTRY_NAMES).forEach(([code,name])=>NAME_TO_CODE2[name]=code);
+    const code=NAME_TO_CODE2[country]||country.slice(0,2).toUpperCase();
+    const flag=code.length===2?`<img src="https://flagcdn.com/16x12/${code.toLowerCase()}.png" width="16" height="12" style="border-radius:2px;vertical-align:middle" onerror="this.style.display='none'">`:code;
     return `<div class="mobile-country-row">
       <div class="mobile-country-rank">${i+1}</div>
-      <div class="mobile-country-badge" style="font-size:14px;background:none;border:none">${flag||country.slice(0,2).toUpperCase()}</div>
+      <div class="mobile-country-badge" style="background:none;border:none;width:26px">${flag}</div>
       <div class="mobile-country-name">${country}</div>
       <div class="mobile-country-count">${count.toLocaleString()}</div>
     </div>`;
