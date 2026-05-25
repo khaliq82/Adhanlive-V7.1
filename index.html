@@ -1159,20 +1159,23 @@ footer{
     overflow:visible;
     padding-bottom:48px;
   }
-  /* Solid black masks to prevent content bleed under nav and footer */
+  /* Solid black masks - highest z-index, content scrolls beneath */
   #mobile-top-mask, #mobile-bottom-mask{display:none;}
   body.map-active #mobile-top-mask{
     display:block;
     position:fixed;top:0;left:0;right:0;
     height:64px;background:#000;
-    z-index:499;pointer-events:none;
+    z-index:600;pointer-events:none;
   }
   body.map-active #mobile-bottom-mask{
     display:block;
     position:fixed;bottom:0;left:0;right:0;
-    height:50px;background:#000;
-    z-index:299;pointer-events:none;
+    height:48px;background:#000;
+    z-index:600;pointer-events:none;
   }
+  /* Nav and footer must sit above the masks */
+  nav{z-index:601 !important;}
+  #map-footer{z-index:601 !important;}
   /* Mobile content wrapper */
   #mobile-content-wrapper{display:none;}
   body.map-active #mobile-content-wrapper{
