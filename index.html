@@ -171,9 +171,9 @@ nav.nav-hidden{
   position:relative;
 }
 .hamburger::after{
-  content:'';position:absolute;inset:-4px;border-radius:50%;
-  border:1.5px solid rgba(255,255,255,0.5);
-  animation:pulse 2.4s ease-out infinite;
+  content:'';position:absolute;inset:-2px;border-radius:6px;
+  border:1px solid rgba(255,255,255,0.25);
+  animation:pulse 3s ease-out infinite;
   pointer-events:none;
 }
 .nav-utc{
@@ -591,6 +591,32 @@ body.map-active #map-footer{display:flex;}
   #map-footer{padding:0 14px;height:40px;}
   .map-footer-tagline,.map-footer-center,.map-footer-share-label{display:none;}
   .map-footer-logo{font-size:12px;}
+
+  /* Mobile feature pills */
+  .mobile-feature-pills{
+    display:flex;gap:8px;padding:12px 16px;
+    flex-wrap:wrap;
+  }
+  .mfp-pill{
+    display:flex;align-items:center;gap:5px;
+    padding:8px 14px;border-radius:20px;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.12);
+    text-decoration:none;
+    font-size:11px;font-weight:600;letter-spacing:0.05em;
+    color:rgba(255,255,255,0.8);text-transform:uppercase;
+    flex:1;justify-content:center;
+  }
+
+  /* Mobile copyright */
+  .mobile-copyright{
+    font-size:9px;color:rgba(255,255,255,0.2);
+    letter-spacing:0.05em;text-align:center;
+    padding:8px 16px 100px;
+  }
+
+  /* Ensure scroll content has enough bottom padding for footer */
+  #scroll-sections{padding-bottom:0;}
 }
 #panel-left.visible{transform:translateX(0);}
 
@@ -1925,6 +1951,18 @@ footer{
     <span>Missing a Mosque? Add it</span>
     <span style="color:var(--gold)">→</span>
   </a>
+
+  <!-- Mobile Feature Pills -->
+  <div class="mobile-feature-pills">
+    <a href="adhan-clock.html" class="mfp-pill">⏱ Adhan Clock</a>
+    <a href="prayer-arcs.html" class="mfp-pill">🌐 Arc Explorer</a>
+    <a href="ask-adhanlive.html" class="mfp-pill">✨ Ask AdhanLive</a>
+  </div>
+
+  <!-- Mobile Copyright -->
+  <div class="mobile-copyright">
+    © 2026 AdhanLive · Mosque data © OpenStreetMap contributors
+  </div>
 
 </div>
 
@@ -4052,20 +4090,7 @@ function shareMapMoment(platform){
 </script>
 
 <!-- Mobile Feature Cards -->
-<div id="mobile-feature-cards">
-  <a href="adhan-clock.html" class="mfc-card">
-    <span class="mfc-icon">⏱</span>
-    <span class="mfc-label">Adhan Clock</span>
-  </a>
-  <a href="prayer-arcs.html" class="mfc-card">
-    <span class="mfc-icon">🌐</span>
-    <span class="mfc-label">Arc Explorer</span>
-  </a>
-  <a href="ask-adhanlive.html" class="mfc-card">
-    <span class="mfc-icon">✨</span>
-    <span class="mfc-label">Ask AdhanLive</span>
-  </a>
-</div>
+
 
 <script>
 // Nav dot badges — hide if already visited
