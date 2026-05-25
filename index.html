@@ -591,8 +591,24 @@ body.map-active #map-footer{display:flex;}
   /* Hide desktop footer on mobile - share is in scroll content */
   #map-footer{display:none !important;}
 
-  /* Nav fully opaque on mobile */
-  nav{background:#000 !important;backdrop-filter:none;}
+  /* Nav fully opaque on mobile - increased height to close gap */
+  nav{
+    background:#000 !important;
+    backdrop-filter:none;
+    height:64px !important;
+  }
+  /* Mobile top mask matches nav height */
+  body.map-active #mobile-top-mask{
+    height:64px;
+  }
+  /* Mobile content wrapper starts below taller nav */
+  body.map-active #mobile-content-wrapper{
+    padding-top:64px;
+  }
+  /* Mobile globe card starts below taller nav */
+  body.map-active #mobile-globe-card{
+    margin-top:64px;
+  }
 
   /* Mobile feature cards - premium vertical */
   .mobile-feature-pills{
