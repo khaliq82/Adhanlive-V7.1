@@ -1149,12 +1149,16 @@ footer{
   #scroll-sections{display:none;}
   body.map-active #scroll-sections{
     display:block;
-    position:relative;
+    position:fixed;
+    top:56px;
+    bottom:40px;
+    left:0;right:0;
     z-index:100;
     background:#000;
-    margin-top:0;
-    padding-top:0;
-    padding-bottom:48px;
+    overflow-y:auto;
+    overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+    padding-bottom:0;
   }
   #mobile-globe-card{display:none;}
   /* Home overlay always on top on mobile */
