@@ -596,7 +596,8 @@ body.map-active #map-footer{display:flex;}
 
   /* Mobile feature cards - premium vertical */
   .mobile-feature-pills{
-    display:flex;flex-direction:column;gap:10px;padding:16px 16px 12px;
+    display:flex;flex-direction:column;gap:10px;
+    padding:16px 16px 0;
   }
   .mfp-pill{
     display:flex;align-items:center;gap:14px;
@@ -630,24 +631,25 @@ body.map-active #map-footer{display:flex;}
     font-size:14px;color:rgba(0,212,255,0.6);flex-shrink:0;
   }
 
-  /* Mobile share footer - static at bottom of scroll */
+  /* Mobile share footer - single line */
   .mobile-share-footer{
-    display:flex;flex-direction:column;align-items:center;
-    gap:10px;padding:14px 16px 20px;
+    display:flex;flex-direction:row;align-items:center;
+    justify-content:space-between;
+    padding:12px 16px 20px;
     border-top:1px solid rgba(255,255,255,0.08);
   }
   .mobile-share-logo{
     display:flex;align-items:center;gap:8px;
-    font-family:'Geist',sans-serif;font-weight:800;font-size:14px;
+    font-family:'Geist',sans-serif;font-weight:800;font-size:13px;
     letter-spacing:-0.02em;color:#fff;
   }
   .mobile-share-logo span{color:#00d4ff;}
-  .mobile-share-btns{display:flex;gap:8px;align-items:center;}
+  .mobile-share-btns{display:flex;gap:6px;align-items:center;}
   /* Mobile copyright */
   .mobile-copyright{
     font-size:9px;color:rgba(255,255,255,0.18);
     letter-spacing:0.03em;text-align:center;
-    padding:4px 16px 0;
+    padding:16px 16px 0;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
 
@@ -1514,6 +1516,10 @@ footer{
 .mm-arrow{color:var(--gold);font-size:12px;flex-shrink:0;}
 
 @media(max-width:768px){
+  /* Consistent spacing across all mobile sections */
+  .mobile-feature-pills{
+    display:flex;flex-direction:column;gap:10px;padding:16px 16px 0;
+  }
   .mobile-mm-strip{
     display:none;
     align-items:center;gap:10px;
@@ -2018,13 +2024,6 @@ footer{
     </div>
   </div>
 
-  <!-- Missing Mosque Mobile — bottom of scroll -->
-  <a href="contact.html#mosque-form" id="mobile-missing-mosque" class="mobile-mm-strip">
-    <span>🕌</span>
-    <span>Missing a Mosque? Add it</span>
-    <span style="color:var(--gold)">→</span>
-  </a>
-
   <!-- Mobile Feature Cards -->
   <div class="mobile-feature-pills">
     <a href="adhan-clock.html" class="mfp-pill">
@@ -2052,6 +2051,13 @@ footer{
       <div class="mfp-arrow">→</div>
     </a>
   </div>
+
+  <!-- Missing Mosque Mobile -->
+  <a href="contact.html#mosque-form" id="mobile-missing-mosque" class="mobile-mm-strip">
+    <span>🕌</span>
+    <span>Missing a Mosque? Add it</span>
+    <span style="color:var(--gold)">→</span>
+  </a>
 
   <!-- Mobile Copyright -->
   <div class="mobile-copyright">
