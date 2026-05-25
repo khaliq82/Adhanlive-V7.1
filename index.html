@@ -1143,7 +1143,15 @@ footer{
   }
   /* Hide scrollable content on mobile until map is entered */
   #scroll-sections{display:none;}
-  body.map-active #scroll-sections{display:block;}
+  body.map-active #scroll-sections{
+    display:block;
+    position:relative;
+    z-index:100;
+    background:#000;
+    margin-top:0;
+    padding-top:0;
+    padding-bottom:48px;
+  }
   #mobile-globe-card{display:none;}
   /* Home overlay always on top on mobile */
   #home-overlay{z-index:200 !important;pointer-events:all !important;}
