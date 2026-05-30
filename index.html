@@ -218,8 +218,8 @@ nav.nav-hidden{
 
 /* ── GLOBE CANVAS ── */
 #globe-canvas{
-  position:fixed;top:56px;left:0;right:0;
-  height:calc(100vh - 56px);
+  position:fixed;top:0;left:0;right:0;
+  height:100vh;
   z-index:0;pointer-events:none;
   transition:filter 1.2s ease;
 }
@@ -2230,16 +2230,17 @@ function enterMap(){
   document.getElementById('home-overlay').classList.add('hidden');
 
   const canvas = document.getElementById('globe-canvas');
-  canvas.style.top='0';
-  canvas.style.height='100vh';
+  canvas.style.top = isMob ? '0' : '56px';
+  canvas.style.height = isMob ? '100vh' : 'calc(100vh - 56px - 44px)';
   // Zoom out slightly so globe fits with margin
   if(typeof targetZ !== 'undefined') targetZ = isMob ? 4.4 : 5.0;
   setTimeout(function(){
     if(camera && renderer){
       const W=window.innerWidth, H=window.innerHeight;
-      camera.aspect=W/H;
+      const rH = isMob ? H : H - 56 - 44;
+      camera.aspect=W/rH;
       camera.updateProjectionMatrix();
-      renderer.setSize(W,H);
+      renderer.setSize(W,rH);
     }
   },450);
   canvas.classList.remove('home-mode');
@@ -2364,6 +2365,13 @@ function goHome(){
   canvasHome.style.height='100vh';
   // Restore zoom for hero
   if(typeof targetZ !== 'undefined') targetZ = isMob ? 3.8 : 4.2;
+  // Restore renderer to full viewport for hero (map mode constrains it)
+  if(!isMob && renderer && camera){
+    const rW=window.innerWidth, rH=window.innerHeight;
+    renderer.setSize(rW, rH);
+    camera.aspect=rW/rH;
+    camera.updateProjectionMatrix();
+  }
   // Hide nav when returning to hero
   updateNavVisibility();
   // mobile-stats hidden via CSS map-active class
@@ -2561,10 +2569,9 @@ function initGlobe(){
     powerPreference:'low-power',
     failIfMajorPerformanceCaveat:false
   });
-  const renderH = isMobileDevice ? H : H - 56; // desktop: canvas starts below 56px nav
+  const renderH = H;
   renderer.setSize(W, renderH);
   renderer.setPixelRatio(Math.min(devicePixelRatio,isMobileDevice?1:2));
-  if(!isMobileDevice){ camera.aspect=W/renderH; camera.updateProjectionMatrix(); }
   if(isMobileDevice){
     camera.aspect = W/H;
     camera.fov = 45;
@@ -2615,7 +2622,7 @@ function initGlobe(){
     clearTimeout(_zoomResumeTimer);
     _zoomResumeTimer=setTimeout(function(){
       if(!dragging){targetZ=DEFAULT_Z;autoRot=true;}
-    },4000);
+    },5000);
   },{passive:false});
 
   // ── TOUCH: drag & pinch-zoom for mobile ──────────────────────
@@ -3417,16 +3424,10 @@ function updateNavVisibility(){
   var nav=document.querySelector('nav');
   if(!nav) return;
   if(mapMode){
-    // Always show nav in map mode
     nav.classList.remove('nav-hidden');
-    return;
-  }
-  // On hero — hide when near top, show when scrolled down
-  var scrolled=window.scrollY||document.documentElement.scrollTop;
-  if(scrolled<80){
-    nav.classList.add('nav-hidden');
   } else {
-    nav.classList.remove('nav-hidden');
+    // Hero is a purely full-screen experience — nav always hidden
+    nav.classList.add('nav-hidden');
   }
 }
 // Hide nav initially on hero
