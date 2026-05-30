@@ -5,6 +5,6 @@
     { "source": "/adhanclock", "destination": "/pages/adhan-clock.html" },
     { "source": "/arcs",       "destination": "/pages/prayer-arcs.html" },
     { "source": "/ask",        "destination": "/pages/ask-adhanlive.html" },
-    { "source": "/contact",    "destination": "/pages/contact.html" }
+    { "source": "/contact",    "destination": "/contact.html" }
   ]
 }
