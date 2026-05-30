@@ -2286,7 +2286,7 @@ function enterMap(){
       if(mRenderer&&mgc){
         const s=mgc.offsetWidth;
         if(s>0){
-          mRenderer.setSize(s*1.45,s*1.45); // match init scale
+          mRenderer.setSize(s*1.3,s*1.3); // match init scale
           mCamera.aspect=1;
           mCamera.updateProjectionMatrix();
           mRenderer.render(mScene,mCamera);
@@ -3981,7 +3981,7 @@ function initMobileGlobe(){
   mCamera.position.z=mTargetZ;
 
   mRenderer=new THREE.WebGLRenderer({canvas:cvs,antialias:false,alpha:true,powerPreference:'low-power'});
-  mRenderer.setSize(size*1.45,size*1.45); // 1.5x = render larger than card, clipped → bigger globe, zoom range unchanged
+  mRenderer.setSize(size*1.3,size*1.3); // 1.5x = render larger than card, clipped → bigger globe, zoom range unchanged
   mRenderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
 
   // Reuse already-loaded desktop texture — instant, no network request
@@ -4221,7 +4221,7 @@ function initMobileGlobe(){
   window.addEventListener('resize',()=>{
     if(window.innerWidth>768)return;
     const s=card.offsetWidth;
-    mRenderer.setSize(s*1.45,s*1.45); // match init scale
+    mRenderer.setSize(s*1.3,s*1.3); // match init scale
   });
 }
 
