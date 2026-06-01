@@ -377,23 +377,22 @@
     <div class="welcome" id="welcome">
       <div class="welcome-icon">🕌</div>
       <div class="welcome-title">Ask Adhan<span>Live</span></div>
-      <div class="welcome-sub">Explore what you see on the map. Ask about the live globe, the Adhan Clock, the prayer arcs, or the astronomy behind it all.</div>
+      <div class="welcome-sub">Explore what you see on the map. Ask about the live globe, the Adhan Clock, the prayer arcs, or how prayer times are calculated.</div>
       <div class="suggestions">
         <div class="chip" onclick="ask(this)">What am I looking at on the live map?</div>
         <div class="chip" onclick="ask(this)">What do the dot colors mean?</div>
         <div class="chip" onclick="ask(this)">What is the Adhan Clock?</div>
         <div class="chip" onclick="ask(this)">Why does the prayer wave move westward?</div>
-        <div class="chip" onclick="ask(this)">What triggers Fajr astronomically?</div>
+        <div class="chip" onclick="ask(this)">How does the live map show prayer times in real time?</div>
         <div class="chip" onclick="ask(this)">Why does Asr time vary between mosques?</div>
         <div class="chip" onclick="ask(this)">What is the Adhan Arc Explorer?</div>
-        <div class="chip" onclick="ask(this)">Why are there gaps in the Adhan Clock bands?</div>
       </div>
       <!-- Input embedded in welcome screen -->
       <div class="welcome-input-wrap">
         <div class="input-box" id="inputBox">
           <textarea
             id="input"
-            placeholder="Ask about the live map, prayer times, or the astronomy..."
+            placeholder="Ask about the live map, prayer times, or how they're calculated..."
             rows="1"
             onkeydown="handleKey(event)"
             oninput="onInput(this)"
