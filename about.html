@@ -256,6 +256,54 @@
     }
     .attribution a:hover { text-decoration: underline; }
 
+    /* Adhan words */
+    .adhan-words {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-top: 28px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .adhan-word {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0 24px;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+    }
+    .adhan-word:last-child { border-bottom: none; }
+    .adhan-arabic {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      color: var(--cyan);
+      text-align: right;
+      direction: rtl;
+    }
+    .adhan-transliteration {
+      font-size: 13px;
+      color: rgba(255,255,255,0.6);
+      font-style: italic;
+      text-align: center;
+    }
+    .adhan-translation {
+      font-size: 13px;
+      color: var(--text2);
+    }
+    .adhan-repeat {
+      font-size: 11px;
+      color: var(--text3);
+      display: block;
+      margin-top: 2px;
+    }
+    @media(max-width:768px){
+      .adhan-word { grid-template-columns: 1fr; gap: 4px; }
+      .adhan-arabic { text-align: right; font-size: 16px; }
+      .adhan-transliteration { text-align: left; }
+    }
+
     /* MAP FOOTER */
     #map-footer{display:flex;position:fixed;bottom:0;left:0;right:0;height:44px;background:rgba(0,0,0,0.92);border-top:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(12px);z-index:300;align-items:center;justify-content:space-between;padding:0 24px;}
     .map-footer-left{display:flex;align-items:center;gap:8px;}
@@ -333,13 +381,114 @@
     AdhanLive makes that continuous, planetary reality visible.
   </p>
 
-  <!-- What is AdhanLive -->
+  <!-- What is the Adhan -->
+  <div class="section">
+    <div class="section-label">What is the Adhan</div>
+    <h2 class="section-title">The Islamic call to prayer</h2>
+    <div class="section-body">
+      <p>Islam prescribes five daily prayers for its followers, Fajr before sunrise, Dhuhr at midday, Asr in the afternoon, Maghrib immediately after sunset, and Isha after nightfall. Each of these prayers is preceded by the Adhan, a formal declaration that the time of prayer has arrived. The person who delivers the Adhan is called the Muezzin. Traditionally, the Muezzin would climb to the top of the minaret, the tall tower attached to a mosque, and call out across the city. Today, most mosques amplify the call through loudspeakers, but the Muezzin remains at the heart of it. A human voice, delivering the same words, at the same times, as it always has been.</p>
+      <p>The Adhan is not a song or a chant. It is a declaration, a set of specific Arabic phrases, delivered in a specific order, at a specific volume. It is meant to carry. It is meant to reach people in their homes, in the streets, in their workplaces, and remind them that it is time to stop and pray.</p>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- How it began -->
+  <div class="section">
+    <div class="section-label">History</div>
+    <h2 class="section-title">How it began</h2>
+    <div class="section-body">
+      <p>The Adhan was established in 622 CE, shortly after the Prophet Muhammad ﷺ and his followers migrated from Makkah to Madeena, an event known in Islamic history as the Hijra. The Muslim community in Madeena needed a way to gather for prayer at the appointed times. Various methods were considered, a bell, a horn, a flag. The Prophet ﷺ rejected each of these, not wanting to adopt the practices of other religious communities. According to Islamic tradition, the matter was resolved when a companion of the Prophet, Abdullah ibn Zayd, described a dream in which a man taught him the words of the call to prayer. The Prophet ﷺ recognized this as divinely inspired and instructed that these words become the Adhan.</p>
+      <p>For the role of Muezzin, the one who would deliver this call to the community, the Prophet ﷺ chose Bilal ibn Rabah (R.A).</p>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Bilal -->
+  <div class="section">
+    <div class="section-label">The First Muezzin</div>
+    <h2 class="section-title">Bilal ibn Rabah (R.A)</h2>
+    <div class="section-body">
+      <p>Bilal ibn Rabah (R.A) was an Abyssinian man who had been born into slavery in Makkah. He was among the earliest converts to Islam, and his faith had cost him enormously, he was subjected to severe persecution by his enslaver for refusing to abandon his belief. He was eventually freed by Abu Bakr (R.A), one of the Prophet's closest companions. When the time came to choose the first Muezzin in Islamic history, the Prophet ﷺ chose Bilal (R.A) for the power, depth, and clarity of his voice.</p>
+      <p>In a society rigidly structured around tribal lineage and social rank, the selection of a formerly enslaved African man to hold one of Islam's most prominent roles was a profound statement. His voice was the first to carry the Adhan across Madeena. It remains one of the most cited examples of Islam's foundational position on human equality.</p>
+      <p>Bilal (R.A) served as Muezzin throughout the life of the Prophet ﷺ. After the Prophet's passing in 632 CE, Bilal (R.A) found it deeply difficult to continue calling the Adhan, as the call reminded him intensely of the Prophet he had loved. He moved to Syria, where he lived until his death around 640 CE. He is buried in Damascus.</p>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Words of the Adhan -->
+  <div class="section">
+    <div class="section-label">The Words</div>
+    <h2 class="section-title">Unchanged for over 1,400 years</h2>
+    <div class="section-body">
+      <p>The words that Bilal (R.A) called out in Madeena in 622 CE are the same words called out in every mosque on Earth today. They have not been modified, translated, or adapted for any language or culture. In Indonesia, in China, in Nigeria, in Canada, in every country where Muslims live, the Adhan arrives in Arabic, unchanged.</p>
+    </div>
+    <div class="adhan-words">
+      <div class="adhan-word">
+        <div class="adhan-arabic">الله أكبر</div>
+        <div class="adhan-transliteration">Allahu Akbar</div>
+        <div class="adhan-translation">God is the Greatest <span class="adhan-repeat">(repeated four times)</span></div>
+      </div>
+      <div class="adhan-word">
+        <div class="adhan-arabic">أشهد أن لا إله إلا الله</div>
+        <div class="adhan-transliteration">Ashhadu an la ilaha illa Allah</div>
+        <div class="adhan-translation">I bear witness that there is no god but Allah <span class="adhan-repeat">(repeated twice)</span></div>
+      </div>
+      <div class="adhan-word">
+        <div class="adhan-arabic">أشهد أن محمداً رسول الله</div>
+        <div class="adhan-transliteration">Ashhadu anna Muhammadan Rasulullah</div>
+        <div class="adhan-translation">I bear witness that Muhammad is the Messenger of God <span class="adhan-repeat">(repeated twice)</span></div>
+      </div>
+      <div class="adhan-word">
+        <div class="adhan-arabic">حي على الصلاة</div>
+        <div class="adhan-transliteration">Hayya ala as-Salah</div>
+        <div class="adhan-translation">Come to prayer <span class="adhan-repeat">(repeated twice)</span></div>
+      </div>
+      <div class="adhan-word">
+        <div class="adhan-arabic">حي على الفلاح</div>
+        <div class="adhan-transliteration">Hayya ala al-Falah</div>
+        <div class="adhan-translation">Come to success <span class="adhan-repeat">(repeated twice)</span></div>
+      </div>
+      <div class="adhan-word">
+        <div class="adhan-arabic">الله أكبر</div>
+        <div class="adhan-transliteration">Allahu Akbar</div>
+        <div class="adhan-translation">God is the Greatest <span class="adhan-repeat">(repeated twice)</span></div>
+      </div>
+      <div class="adhan-word">
+        <div class="adhan-arabic">لا إله إلا الله</div>
+        <div class="adhan-transliteration">La ilaha illa Allah</div>
+        <div class="adhan-translation">There is no god but Allah</div>
+      </div>
+    </div>
+    <div class="section-body" style="margin-top:24px;">
+      <p>These words have remained intact for over 1,400 years. Across every continent, every culture, every language environment, the Adhan arrives in the same Arabic it always has. That level of uniformity, maintained across fourteen centuries and approximately 2 billion Muslims worldwide, is almost without parallel in human history.</p>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Motivation -->
+  <div class="section">
+    <div class="section-label">The Story</div>
+    <h2 class="section-title">A statement with no proof</h2>
+    <div class="motivation">
+      <p>Around ten years ago, I came across a statement that stopped me: <strong>the Adhan is happening somewhere on Earth every single second.</strong> It was written as a fact, quietly, with no proof attached. No map. No data. No way to see it.</p>
+      <p>That statement stayed with me. Was it really true? What would it actually look like if you could see it? The only way to know was through data. Because data alone can confirm what words only claim.</p>
+      <p><strong>That curiosity became AdhanLive.</strong></p>
+    </div>
+  </div>
+
+
+
+  <!-- What AdhanLive shows -->
   <div class="section">
     <div class="section-label">What is AdhanLive</div>
     <h2 class="section-title">A living map of Islamic worship</h2>
     <div class="section-body">
-      <p>AdhanLive is a real-time visualization of the Islamic call to prayer sweeping across Earth. It maps mosques across 150+ countries, calculating each mosque's prayer time using established Islamic prayer calculation methods. When a mosque's prayer time arrives, its dot lights up on the globe in the color of that prayer.</p>
-      <p>The result is a living map, updated every second, showing where on Earth the Adhan is being called right now.</p>
+      <p>Each prayer time is determined by the position of the sun at that specific location on Earth, which means prayer times are different in every city and town around the world. As the Earth rotates, the sun moves continuously westward, and the prayer times follow, travelling steadily from east to west, around the globe, every single day. With mosques present across virtually every country and timezone on Earth, there is no longitude where the Adhan falls silent. One mosque's call ends and another begins, somewhere further west, without pause.</p>
+      <p>AdhanLive maps 280,621 of these mosques across 150+ countries and calculates the prayer time for each one in real time. When a mosque's prayer time arrives, its dot lights up on the globe. Every dot is a real mosque. Every color is a live prayer. And the globe is never empty.</p>
     </div>
     <div class="stats">
       <div class="stat">
@@ -354,19 +503,6 @@
         <div class="stat-number">5</div>
         <div class="stat-label">Daily prayers</div>
       </div>
-    </div>
-  </div>
-
-  <div class="divider"></div>
-
-  <!-- Motivation -->
-  <div class="section">
-    <div class="section-label">The Story</div>
-    <h2 class="section-title">A statement with no proof</h2>
-    <div class="motivation">
-      <p>Around ten years ago, I came across a statement that stopped me: <strong>the Adhan is happening somewhere on Earth every single second.</strong> It was written as a fact, quietly, with no proof attached. No map. No data. No way to see it.</p>
-      <p>That statement stayed with me. Was it really true? What would it actually look like if you could see it? The only way to know was through data. Because data alone can confirm what words only claim.</p>
-      <p><strong>That curiosity became AdhanLive.</strong></p>
     </div>
   </div>
 
