@@ -15,6 +15,7 @@
     document.documentElement.classList.add('goto-livemap');
     window._gotoLivemap = true;
   }
+  // If NOT livemap, the loader IIFE below adds .active class to #site-loader
 })();
 </script>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -303,7 +304,6 @@ nav.nav-hidden{
 }
 /* When going directly to live map — hide home elements instantly before render */
 html.goto-livemap #home-overlay{opacity:0 !important;visibility:hidden !important;pointer-events:none !important;}
-html.goto-livemap #site-loader{display:none !important;}
 html.goto-livemap #vp-scroll-hint{display:none !important;}
 html.goto-livemap #viewport-2{display:none !important;}
 #home-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none;}
@@ -1728,12 +1728,13 @@ footer{
 #site-loader{
   position:fixed;inset:0;z-index:99999;
   background:radial-gradient(ellipse at 40% 50%, #0a1628 0%, #050a14 60%, #000 100%);
-  display:flex;flex-direction:column;
+  display:none;flex-direction:column;
   align-items:center;justify-content:center;
   gap:28px;
   transition:opacity 0.8s ease;
   font-family:'Geist',sans-serif;
 }
+#site-loader.active{display:flex;}
 #site-loader.fade{opacity:0;pointer-events:none;}
 
 /* Globe loading overlay — shown while mosque data loads, evaporates on ready */
@@ -1858,7 +1859,6 @@ window._loaderGlobeReady = function(){
 
   function drawRing(p){
     ctx.clearRect(0,0,200,200);
-    // Track ring
     ctx.beginPath();ctx.arc(CX,CY,R,0,Math.PI*2);
     ctx.strokeStyle='rgba(255,255,255,0.07)';ctx.lineWidth=1;ctx.stroke();
     if(p<=0){
@@ -1867,19 +1867,15 @@ window._loaderGlobeReady = function(){
       return;
     }
     var sa=-Math.PI/2, ea=sa+(p/100*Math.PI*2);
-    // Glow
     ctx.save();ctx.shadowColor='rgba(255,255,255,0.5)';ctx.shadowBlur=14;
     ctx.beginPath();ctx.arc(CX,CY,R,sa,ea);
     ctx.strokeStyle='rgba(255,255,255,0.25)';ctx.lineWidth=2.5;ctx.stroke();
     ctx.restore();
-    // Main arc
     ctx.beginPath();ctx.arc(CX,CY,R,sa,ea);
     ctx.strokeStyle='rgba(255,253,250,0.75)';ctx.lineWidth=1;ctx.stroke();
-    // Tip dot
     ctx.save();ctx.shadowColor='rgba(255,255,255,1)';ctx.shadowBlur=18;
     ctx.beginPath();ctx.arc(CX+R*Math.cos(ea),CY+R*Math.sin(ea),4,0,Math.PI*2);
     ctx.fillStyle='#fff';ctx.fill();ctx.restore();
-    // Percentage text
     var el=document.getElementById('loader-pct');
     if(el)el.textContent=Math.round(p);
   }
@@ -1891,14 +1887,15 @@ window._loaderGlobeReady = function(){
     var l=document.getElementById('site-loader'); if(!l)return;
     setTimeout(function(){
       l.classList.add('fade');
-      setTimeout(function(){l.style.display='none';},800);
+      setTimeout(function(){l.classList.remove('active');l.classList.remove('fade');},800);
     },300);
   }
 
-  // Draw initial frame
+  // Make loader visible and start animation
+  var l=document.getElementById('site-loader');
+  if(l) l.classList.add('active');
   drawRing(0);
 
-  // Use setInterval for reliable timing (rAF can be throttled on background tabs)
   var interval=setInterval(function(){
     if(done){clearInterval(interval);return;}
     var elapsed=Date.now()-startT;
