@@ -410,7 +410,7 @@ footer{
   <a class="logo" href="/home"><div class="logo-dot"></div><span style="display:inline">Adhan<span style="color:#00d4ff">Live</span></span></a>
   <div class="nav-links" id="nav-links">
     <a href="/home" onclick="closeMobileMenu()">Home</a>
-    <a href="/livemap" onclick="sessionStorage.setItem('adhanlive_internal_nav','1');closeMobileMenu()">Live Map</a>
+    <a href="/livemap" onclick="goToLiveMap()">Live Map</a>
     <a href="/adhanclock" class="active" onclick="closeMobileMenu();markVisited('clock')" id="nav-clock-link">Adhan Clock<span class="nav-dot-badge" id="dot-clock"></span></a>
     <a href="/arcs" onclick="closeMobileMenu();markVisited('arc')" id="nav-arc">Arc Explorer<span class="nav-dot-badge" id="dot-arc"></span></a>
     <a href="/prayer-times" onclick="closeMobileMenu()">Prayer Times</a>
@@ -438,7 +438,7 @@ footer{
 <!-- Mobile nav menu -->
 <div id="mobileMenu" style="display:none;position:fixed;top:56px;left:0;right:0;bottom:0;background:rgba(0,0,0,0.97);z-index:9999;flex-direction:column;gap:0;border-top:1px solid rgba(255,255,255,0.08);">
   <a href="/home" style="color:rgba(255,255,255,0.7);text-decoration:none;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.06);">Home</a>
-  <a href="/livemap" onclick="sessionStorage.setItem('adhanlive_internal_nav','1')" style="color:rgba(255,255,255,0.7);text-decoration:none;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.06);">Live Map</a>
+  <a href="/livemap" onclick="goToLiveMap()" style="color:rgba(255,255,255,0.7);text-decoration:none;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.06);">Live Map</a>
   <a href="/adhanclock" style="color:#00d4ff;text-decoration:none;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.06);">Adhan Clock</a>
   <a href="/arcs" style="color:rgba(255,255,255,0.7);text-decoration:none;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.06);">Arc Explorer</a>
   <a href="/prayer-times" style="color:rgba(255,255,255,0.7);text-decoration:none;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.06);">Prayer Times</a>
@@ -1255,6 +1255,12 @@ const nativeBtn=document.getElementById('shareBtn');
 if(navigator.share&&nativeBtn){
   nativeBtn.style.display='inline-flex';
   nativeBtn.addEventListener('click',()=>navigator.share({title:'The Adhan Clock',text:shareText,url:shareUrl}));
+}
+</script>
+<script>
+function goToLiveMap(){
+  try{ sessionStorage.setItem('adhanlive_internal_nav','1'); }catch(e){}
+  window.location.href='/livemap';
 }
 </script>
 </body>
