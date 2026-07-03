@@ -3713,6 +3713,9 @@ function exitViewport2(){
   if(_vp2Animating) return;
   _vp2Animating=true;
   _vp2Active=false;
+  // Stop city rotation
+  if(_vp2CityInterval){ clearInterval(_vp2CityInterval); _vp2CityInterval=null; }
+  _vp2CityIdx=0;
   document.getElementById('viewport-2').classList.remove('active');
   // Restore hero overlay
   document.getElementById('home-overlay').classList.remove('hidden');
@@ -3794,6 +3797,62 @@ goToCard(0);
 function drawVP2Canvases(){
   drawPTClock();
   drawQiblaCompass();
+  // Start city rotation — cycle every 8 seconds
+  if(_vp2CityInterval) clearInterval(_vp2CityInterval);
+  _vp2CityInterval = setInterval(function(){
+    if(!_vp2Active || _vp2Card !== 0) return;
+    _vp2CityIdx = (_vp2CityIdx + 1) % _vp2Cities.length;
+    // Update card description text
+    var city = _vp2Cities[_vp2CityIdx];
+    var tag = document.querySelector('#vp2-card-0 .vp2-card-tag');
+    if(tag) tag.textContent = 'Prayer Times — ' + city.name;
+  }, 8000);
+}
+
+// ── VP2 ROTATING CITIES ──────────────────────────────────────────────────────
+var _vp2Cities = [
+  { name:'New York',  country:'USA',       lat:40.7128, lon:-74.006,  tz:-4, method:{fajr:-15, isha:{angle:-15}, asr:1} },
+  { name:'Cairo',     country:'Egypt',     lat:30.0444, lon:31.2357,  tz:3,  method:{fajr:-19.5,isha:{angle:-17.5},asr:1} },
+  { name:'Jakarta',   country:'Indonesia', lat:-6.2088, lon:106.8456, tz:7,  method:{fajr:-20, isha:{angle:-18}, asr:1} },
+];
+var _vp2CityIdx = 0;
+var _vp2CityInterval = null;
+
+function _calcVP2Prayers(city){
+  var now = new Date();
+  var M = city.method;
+  // Julian day
+  var y=now.getUTCFullYear(), m=now.getUTCMonth()+1, d=now.getUTCDate();
+  if(m<=2){y--;m+=12;}
+  var A=Math.floor(y/100), B=2-A+Math.floor(A/4);
+  var jdn=Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+d+B-1524.5;
+  // Sun position
+  var D=jdn-2451545, g=Math.PI/180*(357.529+0.98560028*D);
+  var q=280.459+0.98564736*D;
+  var L=Math.PI/180*(q+1.915*Math.sin(g)+0.02*Math.sin(2*g));
+  var e=Math.PI/180*(23.439-3.6e-7*D);
+  var RA=180/Math.PI*Math.atan2(Math.cos(e)*Math.sin(L),Math.cos(L))/15;
+  var dec=180/Math.PI*Math.asin(Math.sin(e)*Math.sin(L));
+  var eqt=q/15-((RA%24)+24)%24;
+  var noon=12-eqt+(city.tz-city.lon/15);
+  var lr=city.lat*Math.PI/180, dr=dec*Math.PI/180;
+  function ha(angle){
+    var c=(Math.sin(angle*Math.PI/180)-Math.sin(lr)*Math.sin(dr))/(Math.cos(lr)*Math.cos(dr));
+    return(c<-1||c>1)?NaN:180/Math.PI*Math.acos(c)/15;
+  }
+  var asrAngle=Math.atan(1/(M.asr+Math.tan(Math.abs((city.lat-dec)*Math.PI/180))))*180/Math.PI;
+  var fajr=noon-ha(M.fajr);
+  var dhuhr=noon+0.017;
+  var asr=noon+ha(asrAngle);
+  var maghrib=noon+ha(-0.833);
+  var isha=M.isha.mins?maghrib+M.isha.mins/60:noon+ha(M.isha.angle);
+  return [
+    {name:'FAJR',    h:((fajr   %24)+24)%24, color:'#4466ff'},
+    {name:'DHUHR',   h:((dhuhr  %24)+24)%24, color:'#ffcc00'},
+    {name:'ASR',     h:((asr    %24)+24)%24, color:'#e07a2f'},
+    {name:'MAGHRIB', h:((maghrib%24)+24)%24, color:'#d94f3d'},
+    {name:'ISHA',    h:((isha   %24)+24)%24, color:'#9b59c4'},
+  ];
 }
 
 function drawPTClock(){
@@ -3807,13 +3866,23 @@ function drawPTClock(){
   var ctx=cv.getContext('2d'),cx=sz/2,cy=sz/2,R=sz*0.44;
   ctx.scale(dpr,dpr);
 
+  var city = _vp2Cities[_vp2CityIdx];
+  var prayers = _calcVP2Prayers(city);
+
+  // Current local time for this city
+  var now=new Date();
+  var utcH=now.getUTCHours()+now.getUTCMinutes()/60+now.getUTCSeconds()/3600;
+  var nowH=((utcH+city.tz)%24+24)%24;
+  var hh=Math.floor(nowH), mm=Math.floor((nowH-hh)*60), ss=Math.floor(((nowH-hh)*60-mm)*60);
+  var ap=hh<12?'AM':'PM', disp=((hh%12)||12);
+
   // Background
   ctx.beginPath();ctx.arc(cx,cy,R*1.04,0,Math.PI*2);
   var bg=ctx.createRadialGradient(cx,cy*0.7,0,cx,cy,R*1.04);
   bg.addColorStop(0,'#141820');bg.addColorStop(1,'#07090d');
   ctx.fillStyle=bg;ctx.fill();
 
-  // Outer metallic rim
+  // Outer rim
   ctx.beginPath();ctx.arc(cx,cy,R*1.04,0,Math.PI*2);
   var rim=ctx.createLinearGradient(cx-R,cy-R,cx+R,cy+R);
   rim.addColorStop(0,'rgba(160,160,170,0.8)');
@@ -3824,7 +3893,7 @@ function drawPTClock(){
   // Hour marks
   for(var h=0;h<24;h++){
     var a=(h/24)*Math.PI*2-Math.PI/2;
-    var major=h%6===0,mid=h%3===0;
+    var major=h%6===0, mid=h%3===0;
     var len=major?R*0.12:mid?R*0.08:R*0.05;
     ctx.beginPath();
     ctx.moveTo(cx+Math.cos(a)*(R-1),cy+Math.sin(a)*(R-1));
@@ -3842,23 +3911,12 @@ function drawPTClock(){
     }
   }
 
-  // Prayer needles
-  var prayers=[
-    {name:'FAJR', h:4.5, color:'#4466ff'},
-    {name:'DHUHR', h:12.0, color:'#ffcc00'},
-    {name:'ASR', h:15.5, color:'#e07a2f'},
-    {name:'MAGHRIB', h:18.67, color:'#d94f3d'},
-    {name:'ISHA', h:20.17, color:'#9b59c4'},
-  ];
-  var now=new Date();
-  var nowH=now.getHours()+now.getMinutes()/60;
-
+  // Prayer needles with real times
   prayers.forEach(function(p){
     var a=(p.h/24)*Math.PI*2-Math.PI/2;
-    var isActive=Math.abs(nowH-p.h)<1.5;
+    var diff=Math.abs(((nowH-p.h)+24)%24);
+    var isActive=diff<1.5||diff>22.5;
     var nLen=R*0.72;
-
-    // Needle body
     ctx.save();
     ctx.translate(cx,cy);ctx.rotate(a);
     ctx.beginPath();
@@ -3873,8 +3931,6 @@ function drawPTClock(){
     ctx.shadowColor=isActive?p.color:'transparent';
     ctx.shadowBlur=isActive?16:0;
     ctx.fill();
-
-    // Prayer label
     ctx.font='700 '+Math.round(sz*0.028)+'px Geist,sans-serif';
     ctx.fillStyle=isActive?p.color:'rgba(255,255,255,0.45)';
     ctx.textAlign='center';ctx.textBaseline='middle';
@@ -3882,34 +3938,30 @@ function drawPTClock(){
     ctx.translate(0,-nLen*0.55);ctx.rotate(-a);
     ctx.fillText(p.name,0,0);
     ctx.restore();
-
-    // Rim dot
     ctx.beginPath();ctx.arc(cx+Math.cos(a)*R,cy+Math.sin(a)*R,4,0,Math.PI*2);
     ctx.fillStyle=isActive?p.color:'rgba(255,255,255,0.15)';
     if(isActive){ctx.shadowColor=p.color;ctx.shadowBlur=8;}
     ctx.fill();ctx.shadowBlur=0;
   });
 
-  // Time pit
-  var tp=ctx.createRoundRect?null:null;
+  // Time display
   ctx.save();
-  var pitW=R*0.38,pitH=R*0.1;
+  var pitW=R*0.42,pitH=R*0.11;
   ctx.translate(cx+R*0.42,cy);
   ctx.beginPath();
-  ctx.roundRect(-pitW/2,-pitH/2,pitW,pitH,pitH/2);
+  if(ctx.roundRect) ctx.roundRect(-pitW/2,-pitH/2,pitW,pitH,pitH/2);
+  else ctx.rect(-pitW/2,-pitH/2,pitW,pitH);
   ctx.fillStyle='rgba(0,212,255,0.12)';
   ctx.strokeStyle='rgba(0,212,255,0.5)';
   ctx.lineWidth=1;ctx.fill();ctx.stroke();
-  ctx.font='700 '+Math.round(sz*0.055)+'px Geist,sans-serif';
+  ctx.font='700 '+Math.round(sz*0.048)+'px Geist,sans-serif';
   ctx.fillStyle='#00d4ff';ctx.textAlign='center';ctx.textBaseline='middle';
-  var hh=now.getHours(),mm=now.getMinutes(),ss=now.getSeconds();
-  ctx.fillText(String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0')+':'+String(ss).padStart(2,'0'),0,0);
+  ctx.fillText(String(disp).padStart(2,'0')+':'+String(mm).padStart(2,'0')+':'+String(ss).padStart(2,'0')+' '+ap,0,0);
   ctx.restore();
 
-  // Current time needle (cyan)
+  // Current time needle
   var ca=(nowH/24)*Math.PI*2-Math.PI/2;
-  ctx.beginPath();
-  ctx.moveTo(cx,cy);
+  ctx.beginPath();ctx.moveTo(cx,cy);
   ctx.lineTo(cx+Math.cos(ca)*R*0.88,cy+Math.sin(ca)*R*0.88);
   ctx.strokeStyle='rgba(0,212,255,0.9)';ctx.lineWidth=1.5;
   ctx.shadowColor='rgba(0,212,255,0.6)';ctx.shadowBlur=6;ctx.stroke();ctx.shadowBlur=0;
@@ -3920,12 +3972,12 @@ function drawPTClock(){
 
   // City name
   ctx.font='700 '+Math.round(sz*0.048)+'px Playfair Display,serif';
-  ctx.fillStyle='rgba(235,230,218,0.85)';
+  ctx.fillStyle='rgba(235,230,218,0.88)';
   ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText('Your City',cx,cy-R*0.7);
+  ctx.fillText(city.name,cx,cy-R*0.7);
   ctx.font='400 '+Math.round(sz*0.03)+'px Geist,sans-serif';
   ctx.fillStyle='rgba(180,175,165,0.5)';
-  ctx.fillText('Auto-detected',cx,cy-R*0.58);
+  ctx.fillText(city.country,cx,cy-R*0.58);
 
   // Loop
   requestAnimationFrame(function(){
