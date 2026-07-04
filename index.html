@@ -3725,6 +3725,18 @@ function exitViewport2(){
   setTimeout(function(){ _vp2Animating=false; },650);
 }
 
+// Close VP2 on any nav link click while VP2 is active
+document.addEventListener('click', function(e){
+  if(!_vp2Active) return;
+  var link = e.target.closest('a[href]');
+  if(!link) return;
+  var href = link.getAttribute('href');
+  // Only intercept nav links (not VP2 card buttons which already call exitViewport2)
+  if(href && !link.classList.contains('vp2-card-btn')){
+    exitViewport2();
+  }
+});
+
 function goToCard(idx){
   _vp2Card=Math.max(0,Math.min(3,idx));
   var track=document.getElementById('vp2-track');
