@@ -1463,7 +1463,7 @@ function startLiveMode(){
     updateDateDisplay(dayOfYear);
     updateHourDisplay(utcHour);
     render(dayOfYear, utcHour);
-  }, 60000); // update every minute
+  }, 1000); // update every second
 }
 
 function stopLiveMode(){
