@@ -2936,7 +2936,14 @@ function initGlobe(){
       style: style,
       center: ML_DEFAULT_CENTER,
       zoom: ML_DEFAULT_ZOOM,
-      attributionControl: { compact: true }
+      attributionControl: { compact: true },
+      interactive: true,
+      dragPan: true,
+      dragRotate: true,
+      scrollZoom: true,
+      touchZoomRotate: true,
+      doubleClickZoom: true,
+      boxZoom: true
     });
   }catch(e){
     console.warn('MapLibre globe init failed:', e);
@@ -2948,9 +2955,11 @@ function initGlobe(){
     function rotateStep(){
       _mlRotateFrame = requestAnimationFrame(rotateStep);
       if(!mapMode || !mlMap) return;
-      if(!_mlAutoRotate){
+      if(!_mlAutoRotate || mlMap.isMoving()){
         // Stay in sync with wherever the user manually left the globe,
         // so resuming after idle doesn't jump back to a stale position.
+        // mlMap.isMoving() is a direct state check (not just event-based),
+        // so this can never fight with an active drag/zoom/pinch gesture.
         _mlSpinLng = mlMap.getCenter().lng;
         return;
       }
