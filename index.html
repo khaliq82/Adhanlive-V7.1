@@ -103,6 +103,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Geist:wght@300;400;500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet">
 <script src="mosques_mobile_1.js" defer></script>
 <script src="mosques_mobile_2.js" defer></script>
 <script src="mosques_mobile_3.js" defer></script>
@@ -1955,7 +1957,7 @@ window._loaderGlobeReady = function(){
 </div>
 
 <!-- Globe Canvas -->
-<canvas id="globe-canvas" class="home-mode"></canvas>
+<div id="globe-canvas" class="home-mode"></div>
 
 <!-- Globe fade overlay — bright top, fades to dark at bottom on mobile -->
 <div id="globe-fade-overlay"></div>
@@ -2570,6 +2572,10 @@ function enterMap(){
       camera.updateProjectionMatrix();
       renderer.setSize(W,rH);
     }
+    if(mlMap){
+      mlMap.resize();
+      mlMap.easeTo({zoom:mlMap.getZoom()-0.3,duration:400});
+    }
   },450);
   canvas.classList.remove('home-mode');
   canvas.classList.add('map-mode');
@@ -2700,6 +2706,10 @@ function goHome(){
     renderer.setSize(rW, rH);
     camera.aspect=rW/rH;
     camera.updateProjectionMatrix();
+  }
+  if(mlMap){
+    mlMap.resize();
+    mlMap.easeTo({zoom:ML_DEFAULT_ZOOM,duration:400});
   }
   // Hide nav when returning to hero
   updateNavVisibility();
@@ -2852,7 +2862,7 @@ function activePrayer(times,lh){
   }return null;
 }
 
-// ── THREE.JS GLOBE ───────────────────────────────────────────
+// ── THREE.JS GLOBE (mobile only as of V7.1 Phase 1 — desktop now uses MapLibre below) ──
 let scene,camera,renderer,globe,dotMesh,dotGeo;
 let rotY=0,rotX=0.25,dragging=false,prevM={x:0,y:0},autoRot=false;
 let _introSpinning=false,_introStart=0,_introStartRotY=0,_introFired=false;
@@ -2866,6 +2876,15 @@ const isMob=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 let targetZ=isMob?3.8:4.2;const DEFAULT_Z=isMob?3.8:4.2;
 const R=1.6;
 
+// ── MAPLIBRE GLOBE (desktop, V7.1 Phase 1) ─────────────────────
+let mlMap;                 // the MapLibre Map instance
+let _mlReady=false;        // replaces the old dotGeo-existence check elsewhere
+let _mlAutoRotate=true;
+let _mlRotateFrame=null;
+let _mlLastInteraction=0;
+const ML_DEFAULT_ZOOM=1.8;
+const ML_DEFAULT_CENTER=[20,15];
+
 // Random prayer dots for loading state
 var _loaderDots = [
   {lat:5.5,lon:95.3,p:'fajr'},{lat:3.1,lon:101.7,p:'fajr'},{lat:14.1,lon:120.9,p:'fajr'},
@@ -2876,151 +2895,90 @@ var _loaderDots = [
 ];
 
 function initGlobe(){
-  scene=new THREE.Scene();
-  const W=window.innerWidth, H=window.innerHeight;
-  camera=new THREE.PerspectiveCamera(45,W/H,0.1,100);
-  camera.position.z=isMob?3.8:4.2;
-  camera.position.y=isMob?0.8:0.0;
-  camera.lookAt(0,isMob?0.3:0.1,0);
-  const isMobileDevice=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  // Safari requires specific WebGL context attributes
-  const canvas = document.getElementById('globe-canvas');
-  // Test WebGL support first
-  const testCtx = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-  if(!testCtx){
-    console.warn('WebGL not supported');
-    throw new Error('WebGL not supported');
+  const style = {
+    version: 8,
+    projection: { type: 'globe' },
+    sources: {
+      'satellite': {
+        type: 'raster',
+        tiles: ['https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/g/{z}/{y}/{x}.jpg'],
+        tileSize: 256,
+        attribution: '&copy; EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2020)'
+      },
+      'active-mosques': {
+        type: 'geojson',
+        data: { type:'FeatureCollection', features:[] }
+      }
+    },
+    layers: [
+      { id:'background', type:'background', paint:{'background-color':'#0a0d12'} },
+      { id:'satellite-layer', type:'raster', source:'satellite',
+        paint:{ 'raster-brightness-max':0.75, 'raster-contrast':0.08, 'raster-saturation':-0.15 } },
+      {
+        id:'mosque-dot', type:'circle', source:'active-mosques',
+        paint:{
+          'circle-color':['get','color'],
+          'circle-radius':['interpolate',['linear'],['zoom'], 1,2, 5,3, 10,5, 15,8]
+        }
+      }
+    ]
+  };
+
+  try{
+    mlMap = new maplibregl.Map({
+      container: 'globe-canvas',
+      style: style,
+      center: ML_DEFAULT_CENTER,
+      zoom: ML_DEFAULT_ZOOM,
+      attributionControl: { compact: true }
+    });
+  }catch(e){
+    console.warn('MapLibre globe init failed:', e);
+    return;
   }
-  renderer=new THREE.WebGLRenderer({
-    canvas:canvas,
-    antialias:!isMobileDevice,
-    alpha:true,
-    powerPreference:'low-power',
-    failIfMajorPerformanceCaveat:false
-  });
-  const renderH = H;
-  renderer.setSize(W, renderH);
-  renderer.setPixelRatio(Math.min(devicePixelRatio,isMobileDevice?1:2));
-  if(isMobileDevice){
-    camera.aspect = W/H;
-    camera.fov = 45;
-    camera.position.z = 3.8; // closer = bigger globe
-    camera.position.y = 0.8; // shift up so globe fills upper screen
-    camera.lookAt(0, 0.2, 0);
-    camera.updateProjectionMatrix();
-    renderer.domElement.style.position = 'fixed';
-    renderer.domElement.style.top = '0';
-    renderer.domElement.style.left = '0';
-    renderer.domElement.style.width = '100vw';
-    renderer.domElement.style.height = '100vh';
+
+  function startAutoRotate(){
+    if(_mlRotateFrame) return;
+    function rotateStep(){
+      _mlRotateFrame = requestAnimationFrame(rotateStep);
+      if(_mlAutoRotate && mapMode && mlMap){
+        mlMap.setBearing((mlMap.getBearing()+0.03+360)%360);
+      }
+    }
+    rotateStep();
   }
 
-  if(!window._earthTex) window._earthTex=new THREE.TextureLoader().load('earth.jpg');
-  const earthTex=window._earthTex;
-  const sphereSegs=isMobileDevice?32:64;
-  globe=new THREE.Mesh(new THREE.SphereGeometry(R,sphereSegs,sphereSegs),new THREE.MeshPhongMaterial({
-    map:earthTex,specular:new THREE.Color(0x111122),shininess:5,color:new THREE.Color(0x888888),
-  }));
-  scene.add(globe);
-  scene.add(new THREE.AmbientLight(0xffffff,0.35));
-  const sun=new THREE.DirectionalLight(0xffffff,0.5);sun.position.set(5,3,5);scene.add(sun);
-  scene.add(new THREE.Mesh(new THREE.SphereGeometry(R*1.02,32,32),new THREE.ShaderMaterial({
-    vertexShader:`varying vec3 vN;void main(){vN=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
-    fragmentShader:`varying vec3 vN;void main(){float f=pow(1.-abs(dot(vN,vec3(0,0,1))),3.);gl_FragColor=vec4(.3,.6,1.,f*.2);}`,
-    transparent:true,side:THREE.BackSide,depthWrite:false
-  })));
+  mlMap.on('load', () => {
+    _mlReady = true;
+    mlMap.setSky({ 'atmosphere-blend': ['interpolate',['linear'],['zoom'], 0,0.6, 5,0] });
 
-  const cvs=renderer.domElement;
-  cvs.addEventListener('mousedown',e=>{
-    if(!mapMode)return;
-    dragging=true;autoRot=false;prevM={x:e.clientX,y:e.clientY};
-    document.getElementById('mosque-popup').style.display='none';
+    // Intro spin — fast entrance easing to a stop, matching the previous globe's feel
+    mlMap.easeTo({
+      bearing: mlMap.getBearing()+360,
+      duration: 1500,
+      easing: t => 1-Math.pow(1-t,3)
+    });
+    setTimeout(startAutoRotate, 1600);
+
+    // Pause auto-rotation on user interaction, resume 5s after it stops
+    // (matches the original globe's _zoomResumeTimer behavior)
+    ['dragstart','zoomstart','pitchstart','rotatestart'].forEach(evt=>{
+      mlMap.on(evt, () => { _mlAutoRotate=false; clearTimeout(_zoomResumeTimer); });
+    });
+    ['dragend','zoomend','pitchend','rotateend'].forEach(evt=>{
+      mlMap.on(evt, () => {
+        clearTimeout(_zoomResumeTimer);
+        _zoomResumeTimer=setTimeout(()=>{ _mlAutoRotate=true; },5000);
+      });
+    });
   });
-  window.addEventListener('mouseup',()=>dragging=false);
-  window.addEventListener('mousemove',e=>{
-    if(!dragging)return;
-    rotY+=(e.clientX-prevM.x)*.005;rotX+=(e.clientY-prevM.y)*.005;
-    rotX=Math.max(-1.4,Math.min(1.4,rotX));prevM={x:e.clientX,y:e.clientY};
-  });
-  cvs.addEventListener('wheel',e=>{
-    if(!mapMode)return;
-    e.preventDefault();
-    targetZ=Math.max(1.9,Math.min(8.0,targetZ+e.deltaY*0.002));
-    if(targetZ<DEFAULT_Z-0.1)autoRot=false;
-    // After 4s of no scroll activity, ease back to default zoom and resume spin
-    clearTimeout(_zoomResumeTimer);
-    _zoomResumeTimer=setTimeout(function(){
-      if(!dragging){targetZ=DEFAULT_Z;autoRot=true;}
-    },5000);
-  },{passive:false});
 
-  // ── TOUCH: drag & pinch-zoom for mobile ──────────────────────
-  let touchStart1={x:0,y:0}, touchStart2=null, pinchStartDist=0, pinchStartZ=0;
-  cvs.addEventListener('touchstart',e=>{
-    if(!mapMode)return;
-    e.preventDefault();
-    autoRot=false;
-    if(e.touches.length===1){
-      touchStart1={x:e.touches[0].clientX,y:e.touches[0].clientY};
-      prevM={x:e.touches[0].clientX,y:e.touches[0].clientY};
-      dragging=true;
-    } else if(e.touches.length===2){
-      dragging=false;
-      touchStart2=true;
-      pinchStartDist=Math.hypot(
-        e.touches[0].clientX-e.touches[1].clientX,
-        e.touches[0].clientY-e.touches[1].clientY
-      );
-      pinchStartZ=targetZ;
-    }
-  },{passive:false});
-
-  cvs.addEventListener('touchmove',e=>{
-    if(!mapMode)return;
-    e.preventDefault();
-    if(e.touches.length===1&&dragging){
-      const dx=e.touches[0].clientX-prevM.x;
-      const dy=e.touches[0].clientY-prevM.y;
-      rotY+=dx*0.005;
-      rotX+=dy*0.005;
-      rotX=Math.max(-1.4,Math.min(1.4,rotX));
-      prevM={x:e.touches[0].clientX,y:e.touches[0].clientY};
-    } else if(e.touches.length===2&&touchStart2){
-      const dist=Math.hypot(
-        e.touches[0].clientX-e.touches[1].clientX,
-        e.touches[0].clientY-e.touches[1].clientY
-      );
-      const scale=pinchStartDist/dist;
-      targetZ=Math.max(1.9,Math.min(8.0,pinchStartZ*scale));
-    }
-  },{passive:false});
-
-  cvs.addEventListener('touchend',e=>{
-    if(e.touches.length===0){dragging=false;touchStart2=null;}
-    else if(e.touches.length===1){
-      touchStart2=null;
-      prevM={x:e.touches[0].clientX,y:e.touches[0].clientY};
-      dragging=true;
-    }
-  },{passive:false});
-
-  function handleGlobeClick(clientX, clientY){
-    if(!mapMode||!allMosques.length||!dotGeo)return;
-    const rect=cvs.getBoundingClientRect();
-    const mx=(clientX-rect.left)/rect.width*2-1;
-    const my=-((clientY-rect.top)/rect.height*2-1);
-    const raycaster=new THREE.Raycaster();
-    raycaster.setFromCamera({x:mx,y:my},camera);
-    raycaster.params.Points={threshold:0.04};
-    const hits=raycaster.intersectObject(dotMesh);if(!hits.length)return;
-    const sz=dotGeo.attributes.aSize.array;
-    const hit=hits.find(h=>sz[h.index]>0);if(!hit)return;
-    const m=allMosques[hit.index];if(!m)return;
-    const now=new Date(),utcH=now.getUTCHours()+now.getUTCMinutes()/60+now.getUTCSeconds()/3600;
-    const lh=(utcH+m.tz+48)%24;
-    const ap=activePrayer(calcPrayers(m.lat,m.lon,m.tz,now,m.country),lh);
-    if(!ap)return;
-    showPopup(clientX,clientY,m,ap);
+  // Click a mosque dot → reuse the existing showPopup() unchanged
+  mlMap.on('click', 'mosque-dot', (e) => {
+    if(!mapMode || !e.features.length) return;
+    const props=e.features[0].properties;
+    const m={lat:props.lat,lon:props.lon,tz:props.tz,name:props.name,country:props.country};
+    showPopup(e.point.x, e.point.y, m, props.prayer);
     if(window.innerWidth<=768){
       setTimeout(function(){
         var popup=document.getElementById('mosque-popup');
@@ -3031,111 +2989,50 @@ function initGlobe(){
         }
       },10);
     }
-  }
-  cvs.addEventListener('click',e=>handleGlobeClick(e.clientX,e.clientY));
-  // Tap support for mobile
-  let _tapStart={x:0,y:0,t:0};
-  cvs.addEventListener('touchstart',e=>{
-    if(e.touches.length===1){
-      _tapStart={x:e.touches[0].clientX,y:e.touches[0].clientY,t:Date.now()};
-    }
-  },{passive:true,capture:false});
-  cvs.addEventListener('touchend',e=>{
-    if(e.changedTouches.length===1&&Date.now()-_tapStart.t<250){
-      const dx=e.changedTouches[0].clientX-_tapStart.x;
-      const dy=e.changedTouches[0].clientY-_tapStart.y;
-      if(Math.hypot(dx,dy)<10) handleGlobeClick(e.changedTouches[0].clientX,e.changedTouches[0].clientY);
-    }
-  },{passive:true,capture:false});
-  window.addEventListener('resize',()=>{
-    const W2=window.innerWidth,H2=window.innerHeight;
-    camera.aspect=W2/H2;
-    camera.updateProjectionMatrix();
-    renderer.setSize(W2,H2);
   });
-  let _lastZoom=0;
-  (function anim(){
-    requestAnimationFrame(anim);
-    camera.position.z+=(targetZ-camera.position.z)*0.08;
-    if(Math.abs(camera.position.z-DEFAULT_Z)<0.05&&!dragging)autoRot=true;
-    // Pure velocity-based rotation — smooth always
-    if(_introSpinning){
-      const elapsed=(Date.now()-_introStart)/1000;
-      const dur=1.5;
-      const t=Math.min(elapsed/dur,1);
-      // Ease out cubic — compute velocity as derivative
-      // eased = 1-(1-t)^3, so d(eased)/dt = 3(1-t)^2
-      // vel per frame = Math.PI * 3*(1-t)^2 / dur / 60fps
-      const vel = Math.PI * 3*(1-t)*(1-t) / dur / 60;
-      _spinVel = vel;
-      rotY += vel;
-      if(t>=1){
-        _introSpinning=false;
-        autoRot=true;
-        // _spinVel is already near 0 at t=1, blend up to normal
-        _spinTarget=0.003;
-      }
-    } else if(autoRot){
-      // Ease spin velocity toward target
-      _spinVel += (_spinTarget - _spinVel) * 0.04;
-      rotY += _spinVel;
-    }
-    globe.rotation.set(rotX,rotY,0);
-    if(dotMesh)dotMesh.rotation.set(rotX,rotY,0);
-    // Only recalculate dot sizes when zoom changes (not every frame!)
-    if(dotGeo&&dotGeo.attributes.aSize&&mapMode){
-      const zoom=Math.round(camera.position.z*100);
-      if(zoom!==_lastZoom){
-        _lastZoom=zoom;
-        const sz=dotGeo.attributes.aSize.array;
-        const zoomScale=4.2/Math.max(camera.position.z,1.9);
-        const dotSize=Math.max(2,3*zoomScale);
-        for(let i=0;i<sz.length;i++){if(sz[i]>0)sz[i]=dotSize;}
-        dotGeo.attributes.aSize.needsUpdate=true;
-      }
-    }
-    renderer.render(scene,camera);
-  })();
+  mlMap.on('mouseenter','mosque-dot',()=>{mlMap.getCanvas().style.cursor='pointer';});
+  mlMap.on('mouseleave','mosque-dot',()=>{mlMap.getCanvas().style.cursor='';});
+
+  window.addEventListener('resize',()=>{ if(mlMap) mlMap.resize(); });
 }
 
 function ll2v(lat,lon,r){const phi=(90-lat)*Math.PI/180,theta=(lon+180)*Math.PI/180;return new THREE.Vector3(-r*Math.sin(phi)*Math.cos(theta),r*Math.cos(phi),r*Math.sin(phi)*Math.sin(theta));}
 const PC_THREE={fajr:new THREE.Color(0x4466ff),dhuhr:new THREE.Color(0xffdd00),asr:new THREE.Color(0xff7700),maghrib:new THREE.Color(0xff2200),isha:new THREE.Color(0xcc44ff)};
 
+const ML_PRAYER_COLORS={fajr:'#4466ff',dhuhr:'#ffdd00',asr:'#ff7700',maghrib:'#ff2200',isha:'#cc44ff'};
+
 function buildDots(ms){
-  if(dotMesh)scene.remove(dotMesh);
-  const pos=new Float32Array(ms.length*3),col=new Float32Array(ms.length*3),sz=new Float32Array(ms.length);
-  ms.forEach((m,i)=>{const v=ll2v(m.lat,m.lon,R+.01);pos[i*3]=v.x;pos[i*3+1]=v.y;pos[i*3+2]=v.z;col[i*3]=0;col[i*3+1]=0;col[i*3+2]=0;sz[i]=0;});
-  dotGeo=new THREE.BufferGeometry();
-  dotGeo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
-  dotGeo.setAttribute('aColor',new THREE.Float32BufferAttribute(col,3));
-  dotGeo.setAttribute('aSize',new THREE.Float32BufferAttribute(sz,1));
-  const dotMat=new THREE.ShaderMaterial({
-    vertexShader:`attribute float aSize;attribute vec3 aColor;varying vec3 vC;varying float vA;void main(){vC=aColor;vA=aSize>0.0?1.0:0.0;vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=max(aSize,0.0);gl_Position=projectionMatrix*mv;}`,
-    fragmentShader:`varying vec3 vC;varying float vA;void main(){if(vA<0.5)discard;float d=length(gl_PointCoord-.5)*2.;if(d>1.)discard;gl_FragColor=vec4(vC,1.0);}`,
-    transparent:true,depthWrite:false,blending:THREE.NormalBlending
-  });
-  dotMesh=new THREE.Points(dotGeo,dotMat);scene.add(dotMesh);
+  // MapLibre doesn't need buffer pre-allocation like the old Three.js point
+  // cloud did — just make sure the source reflects current active mosques
+  // whenever a new chunk of data arrives during progressive loading.
+  if(_mlReady) updateDotColors();
 }
 
 function updateDotColors(){
-  if(!dotGeo||!allMosques.length)return;
+  if(!allMosques.length)return;
   const now=new Date(),utcH=now.getUTCHours()+now.getUTCMinutes()/60+now.getUTCSeconds()/3600;
-  const col=dotGeo.attributes.aColor.array,sz=dotGeo.attributes.aSize.array;
   let calling=0;const pC={fajr:0,dhuhr:0,asr:0,maghrib:0,isha:0};
   const useCache=!!_prayerCache;const cities=[];const activeMosques=[];
+  const features=[];
   allMosques.forEach((m,i)=>{
     const lh=(utcH+m.tz+48)%24;
     // Use pre-calculated cache for speed (falls back to live calc if not ready)
     const ap=useCache?getActivePrayerFast(i,lh):activePrayer(calcPrayers(m.lat,m.lon,m.tz,now,m.country),lh);
     if(ap){
-      const c=PC_THREE[ap];col[i*3]=c.r;col[i*3+1]=c.g;col[i*3+2]=c.b;
-      const zoomScale=4.2/Math.max(camera.position.z,1.9);sz[i]=Math.max(2,3*zoomScale);
       calling++;pC[ap]++;
       if(cities.length<50)cities.push({...m,prayer:ap});
       activeMosques.push({lat:m.lat,lon:m.lon,name:m.name,country:m.country,prayer:ap});
-    } else {col[i*3]=0;col[i*3+1]=0;col[i*3+2]=0;sz[i]=0;}
+      features.push({
+        type:'Feature',
+        geometry:{type:'Point',coordinates:[m.lon,m.lat]},
+        properties:{lat:m.lat,lon:m.lon,tz:m.tz,name:m.name,country:m.country,prayer:ap,color:ML_PRAYER_COLORS[ap]}
+      });
+    }
   });
-  dotGeo.attributes.aColor.needsUpdate=true;dotGeo.attributes.aSize.needsUpdate=true;
+  if(_mlReady && mlMap){
+    const src=mlMap.getSource('active-mosques');
+    if(src) src.setData({type:'FeatureCollection',features});
+  }
   return{calling,pC,cities,activeMosques};
 }
 
@@ -3364,7 +3261,7 @@ function getActivePrayerFast(mosqueIdx, localH){
 function tick(){
   if(!allMosques.length)return;
   // If no globe (mobile/WebGL fail), do lightweight calculation
-  if(!dotGeo){
+  if(!_mlReady){
     const now=new Date(),utcH=now.getUTCHours()+now.getUTCMinutes()/60+now.getUTCSeconds()/3600;
     let calling=0;const pC={fajr:0,dhuhr:0,asr:0,maghrib:0,isha:0};const activeMosques=[];
     allMosques.forEach(m=>{
