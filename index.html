@@ -2943,7 +2943,8 @@ function initGlobe(){
       scrollZoom: true,
       touchZoomRotate: true,
       doubleClickZoom: true,
-      boxZoom: true
+      boxZoom: true,
+      zoomSnap: 0
     });
   }catch(e){
     console.warn('MapLibre globe init failed:', e);
@@ -2963,15 +2964,15 @@ function initGlobe(){
         _mlSpinLng = mlMap.getCenter().lng;
         return;
       }
-      let velocity = 0.025; // steady-state spin speed (degrees per frame)
+      let velocity = 0.17; // steady-state spin speed (degrees/frame) - matches original globe's ~35s/rotation pace
       if(_mlIntroActive){
         const elapsed=(Date.now()-_mlIntroStart)/1000;
         const dur=1.5;
         const t=Math.min(elapsed/dur,1);
-        velocity = 0.025 + 0.55*Math.pow(1-t,3); // fast start, eases to steady spin
+        velocity = 0.17 + 3.5*Math.pow(1-t,3); // fast start, eases to steady spin
         if(t>=1) _mlIntroActive=false;
       }
-      _mlSpinLng = ((_mlSpinLng + velocity + 540) % 360) - 180; // spin east, wrap -180..180
+      _mlSpinLng = ((_mlSpinLng - velocity + 540) % 360) - 180; // decreasing longitude = left-to-right sweep on screen
       const c = mlMap.getCenter();
       mlMap.jumpTo({center:[_mlSpinLng, c.lat]});
     }
