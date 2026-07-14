@@ -2547,6 +2547,10 @@ function enterMap(){
     _spinVel=0;
     _spinTarget=0.003;
     autoRot=false;
+    // MapLibre desktop globe intro spin
+    _mlIntroActive=true;
+    _mlIntroStart=Date.now();
+    _mlSpinLng = mlMap ? mlMap.getCenter().lng : ML_DEFAULT_CENTER[0];
   }
 
   document.getElementById('nav-about').classList.remove('active');
@@ -2884,6 +2888,8 @@ let _mlRotateFrame=null;
 let _mlLastInteraction=0;
 const ML_DEFAULT_ZOOM=1.8;
 const ML_DEFAULT_CENTER=[20,15];
+let _mlSpinLng=ML_DEFAULT_CENTER[0];
+let _mlIntroActive=false, _mlIntroStart=0;
 
 // Random prayer dots for loading state
 var _loaderDots = [
@@ -2941,9 +2947,24 @@ function initGlobe(){
     if(_mlRotateFrame) return;
     function rotateStep(){
       _mlRotateFrame = requestAnimationFrame(rotateStep);
-      if(_mlAutoRotate && mapMode && mlMap){
-        mlMap.setBearing((mlMap.getBearing()+0.03+360)%360);
+      if(!mapMode || !mlMap) return;
+      if(!_mlAutoRotate){
+        // Stay in sync with wherever the user manually left the globe,
+        // so resuming after idle doesn't jump back to a stale position.
+        _mlSpinLng = mlMap.getCenter().lng;
+        return;
       }
+      let velocity = 0.025; // steady-state spin speed (degrees per frame)
+      if(_mlIntroActive){
+        const elapsed=(Date.now()-_mlIntroStart)/1000;
+        const dur=1.5;
+        const t=Math.min(elapsed/dur,1);
+        velocity = 0.025 + 0.55*Math.pow(1-t,3); // fast start, eases to steady spin
+        if(t>=1) _mlIntroActive=false;
+      }
+      _mlSpinLng = ((_mlSpinLng + velocity + 540) % 360) - 180; // spin east, wrap -180..180
+      const c = mlMap.getCenter();
+      mlMap.jumpTo({center:[_mlSpinLng, c.lat]});
     }
     rotateStep();
   }
@@ -2951,14 +2972,7 @@ function initGlobe(){
   mlMap.on('load', () => {
     _mlReady = true;
     mlMap.setSky({ 'atmosphere-blend': ['interpolate',['linear'],['zoom'], 0,0.6, 5,0] });
-
-    // Intro spin — fast entrance easing to a stop, matching the previous globe's feel
-    mlMap.easeTo({
-      bearing: mlMap.getBearing()+360,
-      duration: 1500,
-      easing: t => 1-Math.pow(1-t,3)
-    });
-    setTimeout(startAutoRotate, 1600);
+    startAutoRotate(); // loop starts immediately but no-ops until mapMode is true
 
     // Pause auto-rotation on user interaction, resume 5s after it stops
     // (matches the original globe's _zoomResumeTimer behavior)
