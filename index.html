@@ -3064,10 +3064,10 @@ const PC_THREE={fajr:new THREE.Color(0x4466ff),dhuhr:new THREE.Color(0xffdd00),a
 const ML_PRAYER_COLORS={fajr:'#4466ff',dhuhr:'#ffdd00',asr:'#ff7700',maghrib:'#ff2200',isha:'#cc44ff'};
 
 function buildDots(ms){
-  // MapLibre doesn't need buffer pre-allocation like the old Three.js point
-  // cloud did — just make sure the source reflects current active mosques
-  // whenever a new chunk of data arrives during progressive loading.
-  if(_mlReady) updateDotColors();
+  // MapLibre's GeoJSON source needs no buffer pre-allocation or rebuilding
+  // per chunk (unlike the old Three.js point cloud) - the active-mosque
+  // computation is already handled separately and periodically via tick(),
+  // so this is intentionally a no-op now.
 }
 
 function updateDotColors(){
