@@ -103,6 +103,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Geist:wght@300;400;500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="preconnect" href="https://tiles.maps.eox.at" crossorigin>
 <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
 <link href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet">
 <script src="mosques_mobile_1.js" defer></script>
@@ -2883,6 +2885,14 @@ const R=1.6;
 // ── MAPLIBRE GLOBE (desktop, V7.1 Phase 1) ─────────────────────
 let mlMap;                 // the MapLibre Map instance
 let _mlReady=false;        // replaces the old dotGeo-existence check elsewhere
+let _mlTilesSettled=false; // true once the globe's tiles have actually finished loading (not just style/data)
+let _mosqueDataDone=false; // true once the chunked mosque loading loop has finished
+function _tryDismissLoader(){
+  // Only dismiss the loading overlay once BOTH the mosque data AND the
+  // globe's tiles are genuinely ready — avoids the overlay disappearing
+  // while the globe underneath still looks visually incomplete.
+  if(_mosqueDataDone && _mlTilesSettled && window._loaderGlobeReady) window._loaderGlobeReady();
+}
 let _mlAutoRotate=true;
 let _mlRotateFrame=null;
 let _mlLastInteraction=0;
@@ -2951,12 +2961,36 @@ function initGlobe(){
     return;
   }
 
+  const ML_ZOOM_THRESHOLD = ML_DEFAULT_ZOOM + 0.5; // at/below this = "full globe visible", eligible to rotate
+  let _mlInZoomRange = true;      // are we currently at/below the threshold?
+  let _mlZoomOutTimer = null;
+  let _mlZoomOutSettled = true;   // becomes true 2.5s after crossing back into range
+
   function startAutoRotate(){
     if(_mlRotateFrame) return;
     function rotateStep(){
       _mlRotateFrame = requestAnimationFrame(rotateStep);
       if(!mapMode || !mlMap) return;
-      if(!_mlAutoRotate || mlMap.isMoving()){
+
+      const zoom = mlMap.getZoom();
+      if(zoom > ML_ZOOM_THRESHOLD){
+        // Zoomed in to look at something specific - stop rotating immediately,
+        // no delay, and reset the zoom-out debounce for next time
+        if(_mlInZoomRange){
+          _mlInZoomRange = false;
+          _mlZoomOutSettled = false;
+          clearTimeout(_mlZoomOutTimer);
+        }
+        _mlSpinLng = mlMap.getCenter().lng;
+        return;
+      } else if(!_mlInZoomRange){
+        // Just crossed back out to full-globe view - wait 2.5s before resuming
+        _mlInZoomRange = true;
+        clearTimeout(_mlZoomOutTimer);
+        _mlZoomOutTimer = setTimeout(()=>{ _mlZoomOutSettled=true; }, 2500);
+      }
+
+      if(!_mlZoomOutSettled || !_mlAutoRotate || mlMap.isMoving()){
         // Stay in sync with wherever the user manually left the globe,
         // so resuming after idle doesn't jump back to a stale position.
         // mlMap.isMoving() is a direct state check (not just event-based),
@@ -2983,6 +3017,10 @@ function initGlobe(){
     _mlReady = true;
     mlMap.setSky({ 'atmosphere-blend': ['interpolate',['linear'],['zoom'], 0,0.6, 5,0] });
     startAutoRotate(); // loop starts immediately but no-ops until mapMode is true
+
+    // 'idle' fires once all currently-required tiles/resources have
+    // actually finished loading — this is the real "globe looks complete" signal
+    mlMap.once('idle', () => { _mlTilesSettled=true; _tryDismissLoader(); });
 
     // Pause auto-rotation on user interaction, resume 5s after it stops
     // (matches the original globe's _zoomResumeTimer behavior)
@@ -5097,7 +5135,13 @@ async function main(){
   // painted on the globe before evaporating the loading overlay
   requestAnimationFrame(function(){
     requestAnimationFrame(function(){
-      if(window._loaderGlobeReady) window._loaderGlobeReady();
+      _mosqueDataDone = true;
+      _tryDismissLoader();
+      // Safety net: if the globe's tiles never settle (e.g. MapLibre failed
+      // to initialize), don't leave the user stuck on the loading screen forever
+      setTimeout(function(){
+        if(!_mlTilesSettled){ _mlTilesSettled=true; _tryDismissLoader(); }
+      }, 6000);
     });
   });
   setInterval(tick,10000);
