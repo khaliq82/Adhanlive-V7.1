@@ -2929,7 +2929,7 @@ function initGlobe(){
     layers: [
       { id:'background', type:'background', paint:{'background-color':'#0a0d12'} },
       { id:'satellite-layer', type:'raster', source:'satellite',
-        paint:{ 'raster-brightness-max':0.75, 'raster-contrast':0.08, 'raster-saturation':-0.15 } },
+        paint:{ 'raster-brightness-min':0.08, 'raster-brightness-max':1.0, 'raster-contrast':0.05, 'raster-saturation':0.15 } },
       {
         id:'mosque-dot', type:'circle', source:'active-mosques',
         paint:{
